@@ -1,0 +1,91 @@
+services:
+  backend-gin:
+    profiles:
+    - dev
+    - prod
+    build:
+      context: .
+      dockerfile: Dockerfile.ko
+    container_name: test-bob-backend-gin
+    depends_on:
+      database-mysql:
+        condition: service_started
+    networks:
+      backend-database: null
+    ports:
+    - mode: ingress
+      target: 8080
+      published: "80"
+      protocol: tcp
+    restart: always
+  companion-watchtower:
+    profiles:
+    - dev
+    - prod
+    command:
+    - --interval
+    - "30"
+    depends_on:
+      backend-gin:
+        condition: service_started
+      database-mysql:
+        condition: service_started
+      db-admin-phpmyadmin:
+        condition: service_started
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+  database-mysql:
+    profiles:
+    - dev
+    - prod
+    container_name: test-bob-db-mysql
+    env_file:
+    - environment.env
+    image: mysql:8.0
+    networks:
+      backend-database: null
+      mysql-phpmyadmin: null
+    ports:
+    - mode: ingress
+      target: 3306
+      published: "3306"
+      protocol: tcp
+    restart: always
+    volumes:
+    - type: bind
+      source: ./volumes/mysql-data
+      target: /var/lib/mysql
+    - type: bind
+      source: ./volumes/mysql-logs
+      target: /var/log/mysql
+  db-admin-phpmyadmin:
+    profiles:
+    - dev
+    - prod
+    container_name: test-bob-dbadmin-phpmyadmin
+    depends_on:
+      database-mysql:
+        condition: service_started
+    env_file:
+    - environment.env
+    image: phpmyadmin/phpmyadmin:latest
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      mysql-phpmyadmin: null
+    ports:
+    - mode: ingress
+      target: 80
+      published: "81"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: ./volumes/phpmyadmin-sessions
+      target: /sessions
+networks:
+  backend-database: {}
+  mysql-phpmyadmin: {}
