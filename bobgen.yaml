@@ -1,0 +1,11 @@
+mysql:
+  # データベースのドライバー
+  driver: mysql
+  # データベースのDSN
+  dsn: root:TOB4ldtbhEoBOf8yZlMbq5naBevMl4gGvfwgnd7873Nq6QWX4K@tcp(localhost:3306)/main
+  #出力先のディレクトリ
+  output: ./pkg/gen/models
+  # マッピングするテーブル名の指定
+  only:
+    # テーブル名
+    users:

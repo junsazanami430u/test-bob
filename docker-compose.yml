@@ -1,43 +1,4 @@
 services:
-  backend-gin:
-    profiles:
-    - dev
-    - prod
-    build:
-      context: .
-      dockerfile: Dockerfile.ko
-    container_name: test-bob-backend-gin
-    depends_on:
-      database-mysql:
-        condition: service_started
-    networks:
-      backend-database: null
-    ports:
-    - mode: ingress
-      target: 8080
-      published: "80"
-      protocol: tcp
-    restart: always
-  companion-watchtower:
-    profiles:
-    - dev
-    - prod
-    command:
-    - --interval
-    - "30"
-    depends_on:
-      backend-gin:
-        condition: service_started
-      database-mysql:
-        condition: service_started
-      db-admin-phpmyadmin:
-        condition: service_started
-    image: containrrr/watchtower:latest
-    restart: unless-stopped
-    volumes:
-    - type: bind
-      source: /var/run/docker.sock
-      target: /var/run/docker.sock
   database-mysql:
     profiles:
     - dev
@@ -47,7 +8,6 @@ services:
     - environment.env
     image: mysql:8.0
     networks:
-      backend-database: null
       mysql-phpmyadmin: null
     ports:
     - mode: ingress
@@ -62,6 +22,12 @@ services:
     - type: bind
       source: ./volumes/mysql-logs
       target: /var/log/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   db-admin-phpmyadmin:
     profiles:
     - dev
@@ -80,12 +46,26 @@ services:
     ports:
     - mode: ingress
       target: 80
-      published: "81"
+      published: "88"
       protocol: tcp
+
+  atlas-migration:
+    profiles:
+    - dev
+    container_name: test-bob-atlas
+    image: arigaio/atlas:latest
+    depends_on:
+      database-mysql:
+        condition: service_healthy
+    networks:
+      - mysql-phpmyadmin
     volumes:
     - type: bind
-      source: ./volumes/phpmyadmin-sessions
-      target: /sessions
+      source: ./database
+      target: /migrations
+    env_file:
+    - environment.env
+    command: migrate apply --url "mysql://root:${MYSQL_ROOT_PASSWORD}@database-mysql:3306/${MYSQL_DATABASE}"
+    
 networks:
-  backend-database: {}
-  mysql-phpmyadmin: {}
+  mysql-phpmyadmin:

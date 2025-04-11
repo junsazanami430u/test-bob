@@ -1,0 +1,48 @@
+run:
+linters:
+  disable-all: true
+  enable:
+#    - cyclop 修正は別途する
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - gofmt
+    - goimports
+    # - mnd 多すぎるので当面は使わない
+    - gosimple
+    - govet
+    - ineffassign
+    - paralleltest
+    - staticcheck
+    - stylecheck
+    - typecheck
+    # - unused 作成中は、コメントアウト
+    # TODO: CIに組み込みたいので一旦コメントアウト、修正してコメントアウト戻す
+    # - revive
+issues:
+  exclude-use-default: false
+  exclude-dirs:
+    - gen
+linters-settings:
+  staticcheck:
+    checks: ["all", "-SA1019"]
+  stylecheck:
+    # TODO: CIに組み込みたいので一旦"-ST1000"を追加、修正して戻す
+    checks: ["all", "-ST1000"]
+    # https://staticcheck.io/docs/configuration/options/#initialisms
+    # Default: ["ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS"]
+    initialisms: [ "ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "IP", "JSON", "QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS" ]
+  cyclop:
+    skip-tests: true
+  revive:
+    ignore-generated-header: true
+    rules:
+      - name: exported
+      - name: package-comments
+  paralleltest:
+    # https://golangci-lint.run/usage/linters/#paralleltest
+    # Ignore missing calls to `t.Parallel()` in subtests. Top-level tests are
+    # still required to have `t.Parallel`, but subtests are allowed to skip it.
+    # DB上の変化を確認するような場合、上手くテストを書かないと壊れてしまう。NOTE_0302
+    ignore-missing-subtests: true

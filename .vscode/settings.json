@@ -1,0 +1,4 @@
+{
+  "sql.validate.enable": false,
+  "sql.database": "mysql"
+} 
