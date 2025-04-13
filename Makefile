@@ -37,11 +37,12 @@ deps: ## install dependencies
 	env GOBIN=$(PWD)/tmp/bin go install go.uber.org/mock/mockgen@v0.5.0
 
 up:	## up local 開発に必要なコンテナを上げる
-	docker compose --profile dev up -d
+	docker compose up -d
 
 down:	## down local開発に必要なコンテナを落として。MySQLのでデータも削除する。
-	docker compose --profile dev down
+	docker compose down
 	rm -rf volumes
+	rm -rf database/atlas.sum
 
 ## 複数モジュールに渡って作業するので、必要なところに、go workを作成する
 gowork:	## go.work を作る

@@ -1,8 +1,5 @@
 services:
   database-mysql:
-    profiles:
-    - dev
-    - prod
     container_name: test-bob-db-mysql
     environment:
     - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -37,9 +34,6 @@ services:
       retries: 5
       start_period: 30s
   db-admin-phpmyadmin:
-    profiles:
-    - dev
-    - prod
     container_name: test-bob-dbadmin-phpmyadmin
     depends_on:
       database-mysql:
@@ -64,11 +58,8 @@ services:
       target: 80
       published: "88"
       protocol: tcp
-
-  atlas-migration:
-    profiles:
-    - dev
-    container_name: test-bob-atlas
+  atlas-migration-hash:
+    container_name: test-bob-atlas-hash
     image: arigaio/atlas:latest
     depends_on:
       database-mysql:
@@ -88,7 +79,37 @@ services:
     - MYSQL_URL=${MYSQL_URL}
     - MYSQL_DSN=${MYSQL_DSN}
     - MYSQL_TEST_DSN=${MYSQL_TEST_DSN}
-    command: migrate apply --url "mysql://root:${MYSQL_ROOT_PASSWORD}@database-mysql:3306/${MYSQL_DATABASE}"
+    command: migrate hash
+  atlas-migration:
+    container_name: test-bob-atlas
+    image: arigaio/atlas:latest
+    depends_on:
+      atlas-migration-hash:
+        condition: service_completed_successfully
+      database-mysql:
+        condition: service_healthy
+    networks:
+      - mysql-phpmyadmin
+    volumes:
+    - type: bind
+      source: ./database
+      target: /migrations
+    environment:
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_USER=${MYSQL_USER}
+    - PMA_HOSTS=${PMA_HOSTS}
+    - MYSQL_URL=${MYSQL_URL}
+    - MYSQL_DSN=${MYSQL_DSN}
+    - MYSQL_TEST_DSN=${MYSQL_TEST_DSN}
+    command: migrate apply --url "mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@database-mysql:3306/${MYSQL_DATABASE}?wait_timeout=90"
+    restart: "on-failure:3"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 900s
+        max_attempts: 3
     
 networks:
   mysql-phpmyadmin:
