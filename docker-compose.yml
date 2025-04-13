@@ -4,8 +4,16 @@ services:
     - dev
     - prod
     container_name: test-bob-db-mysql
-    env_file:
-    - environment.env
+    environment:
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_USER=${MYSQL_USER}
+    - PMA_HOSTS=${PMA_HOSTS}
+    - MYSQL_URL=${MYSQL_URL}
+    - MYSQL_DSN=${MYSQL_DSN}
+    - MYSQL_TEST_DSN=${MYSQL_TEST_DSN}
+    - TZ=Asia/Tokyo
     image: mysql:8.0
     networks:
       mysql-phpmyadmin: null
@@ -36,8 +44,16 @@ services:
     depends_on:
       database-mysql:
         condition: service_started
-    env_file:
-    - environment.env
+    environment:
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_USER=${MYSQL_USER}
+    - PMA_HOSTS=${PMA_HOSTS}
+    - MYSQL_URL=${MYSQL_URL}
+    - MYSQL_DSN=${MYSQL_DSN}
+    - MYSQL_TEST_DSN=${MYSQL_TEST_DSN}
+    - TZ=Asia/Tokyo
     image: phpmyadmin/phpmyadmin:latest
     labels:
       com.centurylinklabs.watchtower.enable: "true"
@@ -63,8 +79,15 @@ services:
     - type: bind
       source: ./database
       target: /migrations
-    env_file:
-    - environment.env
+    environment:
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_USER=${MYSQL_USER}
+    - PMA_HOSTS=${PMA_HOSTS}
+    - MYSQL_URL=${MYSQL_URL}
+    - MYSQL_DSN=${MYSQL_DSN}
+    - MYSQL_TEST_DSN=${MYSQL_TEST_DSN}
     command: migrate apply --url "mysql://root:${MYSQL_ROOT_PASSWORD}@database-mysql:3306/${MYSQL_DATABASE}"
     
 networks:

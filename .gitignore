@@ -3,3 +3,4 @@ environment.env
 .envrc
 go.work
 go.work.sum
+volumes/
