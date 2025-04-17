@@ -4,3 +4,4 @@ environment.env
 go.work
 go.work.sum
 volumes/
+database/atlas.sum
