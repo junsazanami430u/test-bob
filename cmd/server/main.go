@@ -10,7 +10,6 @@ import (
 	"github.com/aarondl/opt/omit"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/junsazanami430u/test-bob/pkg/gen/models"
-	"github.com/labstack/echo/v4"
 	"github.com/oklog/ulid/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -63,19 +62,6 @@ func main() {
 	} else {
 		fmt.Println("No users found")
 		CreateUser(ctx, &db)
-	}
-
-	r := echo.New()
-	r.GET("/", func(c echo.Context) error {
-		return c.String(200, "Hello World!")
-	})
-	r.GET("/ping", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{
-			"message": "pong",
-		})
-	})
-	if err := r.Start(":8080"); err != nil {
-		slog.Error("Error starting server", "error", err)
 	}
 }
 
