@@ -15,17 +15,12 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
 
 	// テーブルモデルを取得
 	userTable := models.Users
-
-	// if err := godotenv.Load(); err != nil {
-	// 	slog.Error("failed to load environment variables", "error", err)
-	// }
 	dsn := os.Getenv("MYSQL_DSN")
+	ctx := context.Background()
 
-	var v ulid.ULID
 	slog.Info(dsn)
 	db, err := bob.Open("mysql", dsn)
 	if err != nil {
@@ -46,18 +41,15 @@ func main() {
 	}
 
 	if len(users) > 0 {
+		// UnmarshalBinaryでIDを取得
+		var v ulid.ULID
 		err = v.UnmarshalBinary(users[0].ID)
 		if err != nil {
 			slog.Error("failed to marshal ID", "error", err)
 			return
 		}
 		for _, user := range users {
-			fmt.Println(v.String())
-			fmt.Println(user.Name)
-			fmt.Println(user.Email)
-			fmt.Println(user.Password)
-			fmt.Println(user.CreatedAt)
-			fmt.Println(user.UpdatedAt)
+			slog.Info(fmt.Sprintf("\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", v.String(), user.Name, user.Email, user.Password, user.CreatedAt.Format(time.RFC3339), user.UpdatedAt.Format(time.RFC3339)))
 		}
 	} else {
 		fmt.Println("No users found")
@@ -93,11 +85,7 @@ func CreateUser(ctx context.Context, db *bob.DB) {
 	m, err := models.Users.Insert(setter).Exec(ctx, db)
 
 	if err != nil {
-		slog.Error("failed to insert user",
-			"error", err,
-			"id", johnID.String(),
-			"name", "John Doe",
-			"email", "john.doe@example.com")
+		slog.Error(fmt.Sprintf("failed to insert user: %s\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", err, johnID.String(), "John Doe", "john.doe@example.com", "password", time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339)))
 		return
 	}
 
@@ -114,12 +102,13 @@ func CreateUser(ctx context.Context, db *bob.DB) {
 		slog.Error("failed to find user", "error", err)
 		return
 	}
+	// UnmarshalBinaryでIDを取得
 	var id ulid.ULID
-
 	err = id.UnmarshalBinary(john.ID)
 	if err != nil {
 		slog.Error("failed to unmarshal ID", "error", err)
 		return
 	}
-	slog.Info("IDs", slog.String("ID", id.String()), slog.String("Name", john.Name), slog.String("Email", john.Email), slog.String("Password", john.Password), slog.String("CreatedAt", john.CreatedAt.Format(time.RFC3339)), slog.String("UpdatedAt", john.UpdatedAt.Format(time.RFC3339)))
+
+	slog.Info(fmt.Sprintf("\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", id.String(), john.Name, john.Email, john.Password, john.CreatedAt.Format(time.RFC3339), john.UpdatedAt.Format(time.RFC3339)))
 }
