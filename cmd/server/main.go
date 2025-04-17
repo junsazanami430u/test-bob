@@ -14,6 +14,13 @@ import (
 	"github.com/stephenafamo/bob"
 )
 
+type User struct {
+	ID       ulid.ULID
+	Name     string
+	Email    string
+	Password string
+}
+
 func main() {
 
 	// テーブルモデルを取得
@@ -49,15 +56,33 @@ func main() {
 			return
 		}
 		for _, user := range users {
-			slog.Info(fmt.Sprintf("\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", v.String(), user.Name, user.Email, user.Password, user.CreatedAt.Format(time.RFC3339), user.UpdatedAt.Format(time.RFC3339)))
+			slog.Info(fmt.Sprintf(`
+				ID: %s
+				Name: %s
+				Email: %s
+				Password: %s
+				CreatedAt: %s
+				UpdatedAt: %s
+			`,
+				v.String(),
+				user.Name,
+				user.Email,
+				user.Password,
+				user.CreatedAt.Format(time.RFC3339),
+				user.UpdatedAt.Format(time.RFC3339)))
 		}
 	} else {
 		fmt.Println("No users found")
-		CreateUser(ctx, &db)
+		CreateUser(ctx, &User{
+			ID:       ulid.Make(),
+			Name:     "John Doe",
+			Email:    "john.doe@example.com",
+			Password: "password",
+		}, &db)
 	}
 }
 
-func CreateUser(ctx context.Context, db *bob.DB) {
+func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 	johnID := ulid.Make()
 
 	slog.Info("johnID", slog.String("johnID before binary", johnID.String()))
@@ -76,16 +101,29 @@ func CreateUser(ctx context.Context, db *bob.DB) {
 	// Insertでuserを追加
 	setter := &models.UserSetter{
 		ID:        omit.From(johnID.Bytes()),
-		Name:      omit.From("John Doe"),
-		Email:     omit.From("john.doe@example.com"),
-		Password:  omit.From("password"),
+		Name:      omit.From(user.Name),
+		Email:     omit.From(user.Email),
+		Password:  omit.From(user.Password),
 		CreatedAt: omit.From(time.Now()),
 	}
 
 	m, err := models.Users.Insert(setter).Exec(ctx, db)
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to insert user: %s\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", err, johnID.String(), "John Doe", "john.doe@example.com", "password", time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339)))
+		slog.Error(fmt.Sprintf(`failed to insert user: %s\n
+			ID: %s
+			Name: %s
+			Email: %s
+			Password: %s
+			CreatedAt: %s
+			UpdatedAt: %s
+		`, err,
+			johnID.String(),
+			user.Name,
+			user.Email,
+			user.Password,
+			time.Now().Format(time.RFC3339),
+			time.Now().Format(time.RFC3339)))
 		return
 	}
 
@@ -110,5 +148,18 @@ func CreateUser(ctx context.Context, db *bob.DB) {
 		return
 	}
 
-	slog.Info(fmt.Sprintf("\n ID: %s\n Name: %s\n Email: %s\n Password: %s\n CreatedAt: %s\n UpdatedAt: %s\n", id.String(), john.Name, john.Email, john.Password, john.CreatedAt.Format(time.RFC3339), john.UpdatedAt.Format(time.RFC3339)))
+	slog.Info(fmt.Sprintf(`
+		ID: %s
+		Name: %s
+		Email: %s
+		Password: %s
+		CreatedAt: %s
+		UpdatedAt: %s
+	`, id.String(),
+		john.Name,
+		john.Email,
+		john.Password,
+		john.CreatedAt.Format(time.RFC3339),
+		john.UpdatedAt.Format(time.RFC3339)))
+	return
 }
