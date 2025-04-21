@@ -86,17 +86,6 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 	johnID := ulid.Make()
 
 	slog.Info("johnID", slog.String("johnID before binary", johnID.String()))
-	// トランザクションを開始
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		slog.Error("failed to begin transaction", "error", err)
-		return
-	}
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			slog.Error("failed to rollback transaction", "error", err)
-		}
-	}()
 
 	// Insertでuserを追加
 	setter := &models.UserSetter{
@@ -128,12 +117,6 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 	}
 
 	fmt.Println(m)
-
-	// トランザクションをコミット
-	if err := tx.Commit(); err != nil {
-		slog.Error("failed to commit transaction", "error", err)
-		return
-	}
 
 	john, err := models.FindUser(ctx, db, johnID.Bytes())
 	if err != nil {
