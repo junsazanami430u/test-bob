@@ -7,14 +7,8 @@ SHELL=/bin/bash
 help: ## show this message
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-8s\033[0m %s\n", $$1, $$2}'
 
-local: ## ko build (ko.local)
-	$(MAKE) publish KO_DOCKER_REPO=ko.local
-
 fmt: ## go fmt
 	fmt ./...
-
-lint: ## golangci-lint
-	golangci-lint run -c golangci.yml --timeout 10m
 
 test: ## go test
 test: up
@@ -26,16 +20,6 @@ govulncheck: ## go vuln check
 
 run: ## go run .
 	-@go run .
-
-deps: ## install dependencies
-	env GOBIN=$(PWD)/tmp/bin go install github.com/volatiletech/sqlboiler/v4@v4.18.0
-	env GOBIN=$(PWD)/tmp/bin go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-mysql@v4.18.0
-	env GOBIN=$(PWD)/tmp/bin go install github.com/rubenv/sql-migrate/sql-migrate@v1.7.1
-	env GOBIN=$(PWD)/tmp/bin go install github.com/k1LoW/tbls@v1.81.0
-	env GOBIN=$(PWD)/tmp/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-	env GOBIN=$(PWD)/tmp/bin go install golang.org/x/vuln/cmd/govulncheck@latest
-	env GOBIN=$(PWD)/tmp/bin go install go.uber.org/mock/mockgen@v0.5.0
-
 up:	## up local 開発に必要なコンテナを上げる
 	docker compose up -d
 
