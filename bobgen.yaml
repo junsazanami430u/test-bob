@@ -1,3 +1,13 @@
+
+# テストコードを生成しない
+# no_tests: true
+
+# ファクトリーを生成しない
+# no_factory: true
+
+# 生成時にwipeする
+wipe: true
+
 mysql:
   # データベースのドライバー
   driver: mysql
