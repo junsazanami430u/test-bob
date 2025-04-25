@@ -9,7 +9,9 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/junsazanami430u/test-bob/internal"
 	"github.com/junsazanami430u/test-bob/pkg/gen/models"
+	"github.com/junsazanami430u/test-bob/pkg/gen/models/factory"
 	"github.com/oklog/ulid/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -22,13 +24,13 @@ type User struct {
 }
 
 func main() {
-
+	f := factory.New()
+	f.NewUser()
 	// テーブルモデルを取得
 	userTable := models.Users
 	dsn := os.Getenv("MYSQL_DSN")
 	ctx := context.Background()
 
-	slog.Info(dsn)
 	db, err := bob.Open("mysql", dsn)
 	if err != nil {
 		slog.Error("failed to open database", "error", err)
@@ -44,6 +46,11 @@ func main() {
 	users, err := userTable.View.Query().All(ctx, db)
 	if err != nil {
 		slog.Error("failed to get users", "error", err)
+		return
+	}
+
+	if err := templateInsert(ctx, &db); err != nil {
+		slog.Error("failed to insert user", "error", err)
 		return
 	}
 
@@ -145,4 +152,17 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 		john.CreatedAt.Format(time.RFC3339),
 		john.UpdatedAt.Format(time.RFC3339)))
 	return
+}
+
+func templateInsert(ctx context.Context, db bob.Executor) error {
+	user := internal.BobFactryExample("George Doe", "george.doe@example.com", "password")
+	m := user.BuildSetter()
+	_, err := models.Users.Insert(m).Exec(ctx, db)
+	if err != nil {
+		slog.Error("failed to create user", "error", err)
+		return err
+	}
+
+	fmt.Println(m)
+	return nil
 }
