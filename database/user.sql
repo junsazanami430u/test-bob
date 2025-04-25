@@ -1,6 +1,6 @@
 -- MySQL syntax
 create table users (
-    id binary(16) primary key COMMENT 'ユーザーID ULID',
+    id binary(16) primary key unique COMMENT 'ユーザーID ULID',
     name varchar(255) not null COMMENT 'ユーザー名',
     email varchar(255) not null unique COMMENT 'メールアドレス',
     password varchar(255) not null COMMENT 'パスワード',

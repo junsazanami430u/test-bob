@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -54,32 +55,8 @@ func main() {
 		return
 	}
 
-	if len(users) > 0 {
-		// UnmarshalBinaryでIDを取得
-		var v ulid.ULID
-		err = v.UnmarshalBinary(users[0].ID)
-		if err != nil {
-			slog.Error("failed to marshal ID", "error", err)
-			return
-		}
-		for _, user := range users {
-			slog.Info(fmt.Sprintf(`
-				ID: %s
-				Name: %s
-				Email: %s
-				Password: %s
-				CreatedAt: %s
-				UpdatedAt: %s
-			`,
-				v.String(),
-				user.Name,
-				user.Email,
-				user.Password,
-				user.CreatedAt.Format(time.RFC3339),
-				user.UpdatedAt.Format(time.RFC3339)))
-		}
-	} else {
-		fmt.Println("No users found")
+	if len(users) == 0 {
+		slog.Info("No users found")
 		CreateUser(ctx, &User{
 			ID:       ulid.Make(),
 			Name:     "John Doe",
@@ -87,13 +64,32 @@ func main() {
 			Password: "password",
 		}, &db)
 	}
+	for _, user := range users {
+		var v ulid.ULID
+		err = v.UnmarshalBinary(user.ID)
+		if err != nil {
+			slog.Error("failed to marshal ID", "error", err)
+			return
+		}
+		slog.Info(fmt.Sprintf(`
+			ID: %s
+			Name: %s
+			Email: %s
+			Password: %s
+			CreatedAt: %s
+			UpdatedAt: %s
+		`,
+			v.String(),
+			user.Name,
+			user.Email,
+			user.Password,
+			user.CreatedAt.Format(time.RFC3339),
+			user.UpdatedAt.Format(time.RFC3339)))
+	}
 }
 
 func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 	johnID := ulid.Make()
-
-	slog.Info("johnID", slog.String("johnID before binary", johnID.String()))
-
 	// Insertでuserを追加
 	setter := &models.UserSetter{
 		ID:        omit.From(johnID.Bytes()),
@@ -103,7 +99,7 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 		CreatedAt: omit.From(time.Now()),
 	}
 
-	m, err := models.Users.Insert(setter).Exec(ctx, db)
+	_, err := models.Users.Insert(setter).Exec(ctx, db)
 
 	if err != nil {
 		slog.Error(fmt.Sprintf(`failed to insert user: %s\n
@@ -122,8 +118,6 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 			time.Now().Format(time.RFC3339)))
 		return
 	}
-
-	fmt.Println(m)
 
 	john, err := models.FindUser(ctx, db, johnID.Bytes())
 	if err != nil {
@@ -157,12 +151,24 @@ func CreateUser(ctx context.Context, user *User, db *bob.DB) {
 func templateInsert(ctx context.Context, db bob.Executor) error {
 	user := internal.BobFactryExample("George Doe", "george.doe@example.com", "password")
 	m := user.BuildSetter()
-	_, err := models.Users.Insert(m).Exec(ctx, db)
+	exists, err := models.Users.Query(
+		models.SelectWhere.Users.Email.EQ(m.Email.MustGet()),
+	).Exists(ctx, db)
+
+	if err != nil && err != sql.ErrNoRows {
+		slog.Error("failed to find user", "error", err)
+		return err
+	}
+	if exists {
+		slog.Info("user already exists")
+		return nil
+	}
+
+	_, err = models.Users.Insert(m).Exec(ctx, db)
 	if err != nil {
 		slog.Error("failed to create user", "error", err)
 		return err
 	}
 
-	fmt.Println(m)
 	return nil
 }
