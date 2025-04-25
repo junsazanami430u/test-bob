@@ -12,7 +12,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/junsazanami430u/test-bob/internal"
 	"github.com/junsazanami430u/test-bob/pkg/gen/models"
-	"github.com/junsazanami430u/test-bob/pkg/gen/models/factory"
 	"github.com/oklog/ulid/v2"
 	"github.com/stephenafamo/bob"
 )
@@ -25,8 +24,6 @@ type User struct {
 }
 
 func main() {
-	f := factory.New()
-	f.NewUser()
 	// テーブルモデルを取得
 	userTable := models.Users
 	dsn := os.Getenv("MYSQL_DSN")
